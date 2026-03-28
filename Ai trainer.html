@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI — Personal Trainer & BMI</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&family=Space+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #080c10;
+            --surface: #0e1418;
+            --card: #131a20;
+            --border: rgba(255, 255, 255, 0.07);
+            --accent: #e8ff47;
+            --accent2: #ff5c35;
+            --accent3: #3dffd0;
+            --text: #f0ece3;
+            --muted: #7a8b96;
+            --gold: #ffd166;
+            --r: 18px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ANIMATED BACKGROUND GRID */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(232, 255, 71, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(232, 255, 71, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+            animation: gridShift 20s linear infinite;
+        }
+
+        @keyframes gridShift {
+            to {
+                background-position: 60px 60px;
+            }
+        }
+
+        /* AMBIENT GLOWS */
+        .glow-orb {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            filter: blur(80px);
+            z-index: 0;
+        }
+
+        .glow-orb-1 {
+            width: 400px;
+            height: 400px;
+            background: rgba(232, 255, 71, 0.06);
+            top: -100px;
+            right: -100px;
+            animation: orbFloat 12s ease-in-out infinite;
+        }
+
+        .glow-orb-2 {
+            width: 500px;
+            height: 500px;
+            background: rgba(255, 92, 53, 0.05);
+            bottom: -150px;
+            left: -100px;
+            animation: orbFloat 16s ease-in-out infinite reverse;
+        }
+
+        .glow-orb-3 {
+            width: 300px;
+            height: 300px;
+            background: rgba(61, 255, 208, 0.04);
+            top: 50%;
+            left: 40%;
+            animation: orbFloat 10s ease-in-out infinite 3s;
+        }
+
+        @keyframes orbFloat {
+
+            0%,
+            100% {
+                transform: translate(0, 0);
+            }
+
+            50% {
+                transform: translate(30px, -40px);
+            }
+        }
+
+        /* LAYOUT */
+        .wrapper {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 6rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* HEADER */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem 0 2.5rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2.5rem;
+        }
+
+        .logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.2rem;
+            letter-spacing: 4px;
+            color: var(--accent);
+            text-shadow: 0 0 30px rgba(232, 255, 71, 0.4);
+        }
+
+        .logo span {
+            color: var(--text);
+        }
+
+        .tagline {
+            font-size: 0.78rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-family: 'Space Mono', monospace;
+        }
+
+        /* TWO COLUMN MAIN */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        /* LEFT COLUMN */
+        .left-col {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* INPUT SECTION */
+        .input-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .input-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+        }
+
+        .section-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .inputs-row {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .field {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 0.78rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-family: 'Space Mono', monospace;
+            margin-bottom: 0.5rem;
+        }
+
+        .field input {
+            width: 100%;
+            background: #0a0f13;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 0.9rem 1.2rem;
+            font-size: 1.4rem;
+            font-family: 'Bebas Neue', sans-serif;
+            letter-spacing: 2px;
+            color: var(--text);
+            outline: none;
+            transition: 0.2s;
+        }
+
+        .field input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(232, 255, 71, 0.1), inset 0 0 20px rgba(232, 255, 71, 0.03);
+        }
+
+        .field input::placeholder {
+            color: #2a3840;
+        }
+
+        .calc-btn {
+            background: var(--accent);
+            color: #080c10;
+            border: none;
+            border-radius: 10px;
+            padding: 0.9rem 2.5rem;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3rem;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: 0.2s;
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .calc-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: translateX(-100%);
+            transition: 0.4s;
+        }
+
+        .calc-btn:hover::after {
+            transform: translateX(100%);
+        }
+
+        .calc-btn:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 30px rgba(232, 255, 71, 0.4);
+        }
+
+        .calc-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* BMI RESULT */
+        .result-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 2rem;
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            flex-wrap: wrap;
+            transition: 0.3s;
+        }
+
+        .bmi-giant {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 5.5rem;
+            line-height: 1;
+            color: var(--text);
+            transition: all 0.5s;
+            position: relative;
+        }
+
+        .bmi-unit {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--muted);
+            letter-spacing: 2px;
+            margin-top: 0.3rem;
+        }
+
+        .bmi-meta {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .category-pill {
+            display: inline-block;
+            padding: 0.4rem 1.2rem;
+            border-radius: 60px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.4rem;
+            letter-spacing: 3px;
+            margin-bottom: 0.8rem;
+            background: rgba(232, 255, 71, 0.12);
+            color: var(--accent);
+            border: 1px solid rgba(232, 255, 71, 0.3);
+        }
+
+        .bmi-bar-wrap {
+            background: #0a0f13;
+            border-radius: 60px;
+            height: 8px;
+            width: 100%;
+            max-width: 260px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bmi-bar-fill {
+            height: 100%;
+            border-radius: 60px;
+            background: linear-gradient(90deg, var(--accent3), var(--accent), var(--accent2));
+            transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            width: 0%;
+        }
+
+        .bmi-scale-labels {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--muted);
+            margin-top: 0.3rem;
+            max-width: 260px;
+        }
+
+        /* PLANS GRID */
+        .plans-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .plan-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 1.8rem;
+            transition: 0.2s;
+        }
+
+        .plan-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .plan-card.diet-card {
+            border-top: 2px solid var(--accent3);
+        }
+
+        .plan-card.ex-card {
+            border-top: 2px solid var(--accent2);
+        }
+
+        .plan-card h2 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 3px;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .diet-card h2 {
+            color: var(--accent3);
+        }
+
+        .ex-card h2 {
+            color: var(--accent2);
+        }
+
+        .plan-list {
+            list-style: none;
+        }
+
+        .plan-list li {
+            display: flex;
+            gap: 0.8rem;
+            align-items: flex-start;
+            padding: 0.65rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.92rem;
+            color: #c0cdd6;
+            line-height: 1.5;
+            animation: fadeSlideIn 0.4s ease both;
+        }
+
+        .plan-list li:last-child {
+            border-bottom: none;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .plan-list li .icon {
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        /* EXERCISE ACCORDION */
+        .ex-tabs {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .ex-tab {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 60px;
+            padding: 0.3rem 0.9rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            color: var(--muted);
+            cursor: pointer;
+            transition: 0.2s;
+            text-transform: uppercase;
+        }
+
+        .ex-tab.active {
+            background: var(--accent2);
+            color: #080c10;
+            border-color: var(--accent2);
+            font-weight: 700;
+        }
+
+        .ex-tab:hover:not(.active) {
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--text);
+        }
+
+        /* WEEKLY SCHEDULE */
+        .schedule-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 1.8rem;
+        }
+
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .day-block {
+            background: #0a0f13;
+            border-radius: 10px;
+            padding: 0.6rem 0.3rem;
+            text-align: center;
+            border: 1px solid var(--border);
+            transition: 0.2s;
+        }
+
+        .day-block.active-day {
+            border-color: var(--accent);
+            background: rgba(232, 255, 71, 0.07);
+        }
+
+        .day-block.rest-day {
+            border-color: rgba(61, 255, 208, 0.2);
+            background: rgba(61, 255, 208, 0.04);
+        }
+
+        .day-name {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 2px;
+            color: var(--muted);
+            text-transform: uppercase;
+        }
+
+        .day-type {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            margin-top: 0.3rem;
+            color: var(--text);
+        }
+
+        .day-block.active-day .day-type {
+            color: var(--accent);
+        }
+
+        .day-block.rest-day .day-type {
+            color: var(--accent3);
+        }
+
+        /* ===== RIGHT COLUMN — TRAINER CHAT ===== */
+        .trainer-panel {
+            position: sticky;
+            top: 1.5rem;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            max-height: 780px;
+            overflow: hidden;
+        }
+
+        .trainer-header {
+            padding: 1.5rem 1.5rem 1.2rem;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .trainer-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent2), var(--accent));
+        }
+
+        .trainer-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff5c35, #ffd166);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            margin-bottom: 0.6rem;
+            box-shadow: 0 0 20px rgba(255, 92, 53, 0.3);
+        }
+
+        .trainer-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3rem;
+            letter-spacing: 3px;
+            color: var(--text);
+        }
+
+        .trainer-status {
+            font-size: 0.72rem;
+            color: var(--accent3);
+            font-family: 'Space Mono', monospace;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent3);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .bmi-context-bar {
+            padding: 0.6rem 1.5rem;
+            background: rgba(232, 255, 71, 0.05);
+            border-bottom: 1px solid var(--border);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            flex-shrink: 0;
+        }
+
+        .bmi-context-bar span {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            scroll-behavior: smooth;
+        }
+
+        .messages-area::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .messages-area::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .messages-area::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 10px;
+        }
+
+        .msg {
+            max-width: 90%;
+            animation: msgIn 0.3s ease both;
+        }
+
+        @keyframes msgIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px) scale(0.97);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .msg.trainer {
+            align-self: flex-start;
+        }
+
+        .msg.user {
+            align-self: flex-end;
+        }
+
+        .msg-bubble {
+            padding: 0.75rem 1rem;
+            border-radius: 14px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .msg.trainer .msg-bubble {
+            background: #1a2229;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-bottom-left-radius: 4px;
+            color: #d0dde6;
+        }
+
+        .msg.user .msg-bubble {
+            background: var(--accent);
+            color: #080c10;
+            border-bottom-right-radius: 4px;
+            font-weight: 500;
+        }
+
+        .msg-time {
+            font-size: 0.62rem;
+            color: var(--muted);
+            margin-top: 0.25rem;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .msg.user .msg-time {
+            text-align: right;
+        }
+
+        /* typing indicator */
+        .typing-indicator .msg-bubble {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 0.75rem 1.2rem;
+        }
+
+        .typing-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--muted);
+            animation: typingBounce 1.2s ease-in-out infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingBounce {
+
+            0%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-6px);
+            }
+        }
+
+        /* quick prompts */
+        .quick-prompts {
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .quick-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 60px;
+            padding: 0.35rem 0.8rem;
+            font-size: 0.72rem;
+            color: var(--muted);
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: 'DM Sans', sans-serif;
+            white-space: nowrap;
+        }
+
+        .quick-btn:hover {
+            border-color: var(--accent2);
+            color: var(--accent2);
+        }
+
+        /* chat input */
+        .chat-input-area {
+            padding: 1rem 1.5rem 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 0.6rem;
+            align-items: flex-end;
+            flex-shrink: 0;
+        }
+
+        #chatInput {
+            flex: 1;
+            background: #0a0f13;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            font-size: 0.9rem;
+            font-family: 'DM Sans', sans-serif;
+            color: var(--text);
+            resize: none;
+            outline: none;
+            min-height: 44px;
+            max-height: 100px;
+            transition: 0.2s;
+            line-height: 1.4;
+        }
+
+        #chatInput:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(232, 255, 71, 0.08);
+        }
+
+        #chatInput::placeholder {
+            color: #2a3840;
+        }
+
+        .send-btn {
+            background: var(--accent2);
+            border: none;
+            border-radius: 10px;
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+            flex-shrink: 0;
+            font-size: 1.1rem;
+            color: white;
+        }
+
+        .send-btn:hover {
+            background: #ff7055;
+            transform: scale(1.05);
+        }
+
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* RESPONSIVE */
+        @media(max-width:1050px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .trainer-panel {
+                height: 600px;
+                max-height: 600px;
+                position: static;
+            }
+        }
+
+        @media(max-width:680px) {
+            .plans-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .schedule-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            header {
+                flex-direction: column;
+                gap: 0.5rem;
+                text-align: center;
+            }
+        }
+
+        /* STAT CHIPS */
+        .stat-row {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin-top: 0.8rem;
+        }
+
+        .stat-chip {
+            background: #0a0f13;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.4rem 0.8rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .stat-chip strong {
+            color: var(--text);
+            display: block;
+            font-size: 1rem;
+            font-family: 'Bebas Neue', sans-serif;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="glow-orb glow-orb-1"></div>
+    <div class="glow-orb glow-orb-2"></div>
+    <div class="glow-orb glow-orb-3"></div>
+
+    <div class="wrapper">
+        <header>
+            <div>
+                <div class="logo">AI<span> TRAINER</span></div>
+                <div class="tagline">// AI-Powered Body Blueprint</div>
+            </div>
+            <div
+                style="text-align:right;color:var(--muted);font-family:'Space Mono',monospace;font-size:0.68rem;letter-spacing:2px;">
+                BMI · NUTRITION · MOVEMENT · AI COACH
+            </div>
+        </header>
+
+        <div class="main-grid">
+            <!-- LEFT -->
+            <div class="left-col">
+
+                <!-- INPUT CARD -->
+                <div class="input-card">
+                    <div class="section-label">// your stats</div>
+                    <div class="inputs-row">
+                        <div class="field">
+                            <label>Height (cm)</label>
+                            <input type="number" id="height" placeholder="178" min="100" max="250" step="0.1">
+                        </div>
+                        <div class="field">
+                            <label>Weight (kg)</label>
+                            <input type="number" id="weight" placeholder="74" min="20" max="300" step="0.1">
+                        </div>
+                        <div class="field">
+                            <label>Age</label>
+                            <input type="number" id="age" placeholder="28" min="10" max="100">
+                        </div>
+                        <button class="calc-btn" id="calcBtn">CALCULATE →</button>
+                    </div>
+                </div>
+
+                <!-- RESULT CARD -->
+                <div class="result-card" id="resultCard">
+                    <div>
+                        <div class="bmi-giant" id="bmiVal">——</div>
+                        <div class="bmi-unit">KG / M²</div>
+                    </div>
+                    <div class="bmi-meta">
+                        <div class="category-pill" id="catPill">ENTER YOUR STATS</div>
+                        <div class="bmi-bar-wrap">
+                            <div class="bmi-bar-fill" id="bmiBar"></div>
+                        </div>
+                        <div class="bmi-scale-labels">
+                            <span>UNDER</span><span>NORMAL</span><span>OVER</span><span>OBESE</span>
+                        </div>
+                        <div class="stat-row" id="statRow" style="display:none">
+                            <div class="stat-chip"><strong id="idealWeight">——</strong>IDEAL WT</div>
+                            <div class="stat-chip"><strong id="bmrVal">——</strong>BMR KCAL</div>
+                            <div class="stat-chip"><strong id="tdeeVal">——</strong>TDEE</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PLANS GRID -->
+                <div class="plans-grid">
+                    <!-- DIET -->
+                    <div class="plan-card diet-card">
+                        <h2>🥗 NUTRITION</h2>
+                        <ul class="plan-list" id="dietList">
+                            <li><span class="icon">→</span> Calculate your BMI to unlock personalised meal guidance</li>
+                        </ul>
+                    </div>
+
+                    <!-- EXERCISE -->
+                    <div class="plan-card ex-card">
+                        <h2>⚡ TRAINING</h2>
+                        <div class="ex-tabs" id="exTabs"></div>
+                        <ul class="plan-list" id="exList">
+                            <li><span class="icon">→</span> Your exercise protocol will appear here</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- WEEKLY SCHEDULE -->
+                <div class="schedule-card" id="scheduleCard">
+                    <div class="section-label">// weekly blueprint</div>
+                    <div class="schedule-grid" id="scheduleGrid">
+                        <div class="day-block">
+                            <div class="day-name">MON</div>
+                            <div class="day-type">——</div>
+                        </div>
+                        <div class="day-block">
+                            <div class="day-name">TUE</div>
+                            <div class="day-type">——</div>
+                        </div>
+                        <div class="day-block">
+                            <div class="day-name">WED</div>
+                            <div class="day-type">——</div>
+                        </div>
+                        <div class="day-block">
+                            <div class="day-name">THU</div>
+                            <div class="day-type">——</div>
+                        </div>
+                        <div class="day-block">
+                            <div class="day-name">FRI</div>
+                            <div class="day-type">——</div>
+                        </div>
+                        <div class="day-block">
+                            <div class="day-name">SAT</div>
+                            <div class="day-type">——</div>
+                        </div>
+                        <div class="day-block">
+                            <div class="day-name">SUN</div>
+                            <div class="day-type">——</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /left-col -->
+
+            <!-- RIGHT — AI TRAINER CHAT -->
+            <div class="trainer-panel">
+                <div class="trainer-header">
+                    <div class="trainer-avatar">🏋️</div>
+                    <div class="trainer-name">COACH APEX</div>
+                    <div class="trainer-status"><span class="status-dot"></span>AI TRAINER · ONLINE</div>
+                </div>
+
+                <div class="bmi-context-bar" id="contextBar">
+                    BMI: <span id="ctxBmi">—</span> &nbsp;|&nbsp; CATEGORY: <span id="ctxCat">—</span> &nbsp;|&nbsp;
+                    STATUS: <span style="color:var(--muted)">WAITING FOR STATS</span>
+                </div>
+                <div class="api-key-bar" style="margin:12px 0; font-size:0.9rem; color:#ddd; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                    <label>API Key:</label>
+                    <input id="apiKeyInput" type="password" placeholder="Paste Gemini API key here (optional for OpenAI proxy)" style="flex:1; min-width:220px;" />
+                    <button id="saveApiKeyBtn" style="padding:4px 8px;">Save</button>
+                    <span id="apiKeyStatus" style="margin-left:8px;color:#ff0;"></span>
+                    <label style="margin-left:12px;">Provider:</label>
+                    <select id="providerSelect" style="padding:4px 8px; margin-right:8px;">
+                        <option value="gemini">Gemini</option>
+                        <option value="openai" selected>OpenAI</option>
+                    </select>
+                    <span style="font-size:0.78rem; color:#a9b6be;">(OpenAI uses server key; no client key required)</span>
+                </div>
+                <div class="messages-area" id="messagesArea">
+                    <div class="msg trainer">
+                        <div class="msg-bubble">👋 Hey! I'm <strong>Coach Apex</strong>, your AI personal
+                            trainer.<br><br>Calculate your BMI first, then ask me anything — meal plans, workouts,
+                            supplements, recovery, motivation — I've got you! 💪</div>
+                        <div class="msg-time">Just now</div>
+                    </div>
+                </div>
+                <div class="quick-prompts" id="quickPrompts">
+                    <button class="quick-btn" onclick="sendQuick(this)">Best exercises for me?</button>
+                    <button class="quick-btn" onclick="sendQuick(this)">What should I eat today?</button>
+                    <button class="quick-btn" onclick="sendQuick(this)">How fast can I see results?</button>
+                    <button class="quick-btn" onclick="sendQuick(this)">Supplement tips?</button>
+                </div>
+                <div class="chat-input-area">
+                    <textarea id="chatInput" placeholder="Ask Coach Apex anything…" rows="1"></textarea>
+                    <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+                </div>
+            </div>
+
+        </div><!-- /main-grid -->
+    </div><!-- /wrapper -->
+
+    <script>
+        // ===== STATE =====
+        let userBMI = null, userCategory = null, userAge = null, userHeight = null, userWeight = null;
+        let chatHistory = [];
+        let currentExTab = 'strength';
+        let APEX_API_KEY = localStorage.getItem('APEX_API_KEY') || '';
+
+        function setApiKey(key) {
+            APEX_API_KEY = key.trim();
+            localStorage.setItem('APEX_API_KEY', APEX_API_KEY);
+            const status = document.getElementById('apiKeyStatus');
+            status.textContent = APEX_API_KEY ? 'API Key saved ✓' : 'API Key cleared';
+            status.style.color = APEX_API_KEY ? 'limegreen' : 'orange';
+        }
+
+
+        // ===== DATA TABLES =====
+        const DATA = {
+            Underweight: {
+                diet: [
+                    { icon: '🥑', text: 'Caloric surplus 300–500 kcal above TDEE — healthy fats: avocado, nuts, EVOO' },
+                    { icon: '🍗', text: '1.6–2.2g protein per kg bodyweight — chicken, eggs, Greek yoghurt, whey' },
+                    { icon: '🍚', text: 'Carb loading: quinoa, oats, brown rice, sweet potato, whole pasta' },
+                    { icon: '🥛', text: 'Full-fat dairy or fortified plant milks + protein shakes post-workout' },
+                    { icon: '🍌', text: '5–6 small meals: trail mix, banana + PB, dried fruit, avocado toast' },
+                    { icon: '🫐', text: 'Calorie-dense snacks: nut butter, seeds, dark chocolate, smoothie bowls' },
+                ],
+                exercises: {
+                    strength: [
+                        { icon: '🏋️', text: 'Compound lifts 4×/week: squat, deadlift, bench press, barbell rows (4×6-8)' },
+                        { icon: '💪', text: 'Progressive overload — add 2.5kg every week or increase reps each session' },
+                        { icon: '🍑', text: 'Glute & leg focus: Bulgarian split squats, leg press, hip thrusts 3×10' },
+                        { icon: '🤜', text: 'Upper push: overhead press, dips, incline DB press 3×8-10' },
+                        { icon: '🔗', text: 'Upper pull: pull-ups/chin-ups, cable rows, face pulls 3×8-12' },
+                        { icon: '🧘', text: 'Core bracing: dead bugs, pallof press, ab wheel (not crunches)' },
+                    ],
+                    cardio: [
+                        { icon: '🚶', text: '2× per week max — 20 min low-intensity walk; avoid burning surplus calories' },
+                        { icon: '🚴', text: 'Light cycling 15 min post-lift for active recovery, not fat burn' },
+                        { icon: '⛹️', text: 'Sport or recreational activity OK — 1× weekly, keep heart rate moderate' },
+                    ],
+                    flexibility: [
+                        { icon: '🧘', text: 'Daily 10-min mobility: hip flexors, thoracic spine, shoulders' },
+                        { icon: '🤸', text: 'Yoga 1× per week for joint health and range of motion' },
+                        { icon: '😴', text: '8h+ sleep per night — critical for muscle repair and hormone production' },
+                    ]
+                },
+                schedule: ['STRENGTH', 'CARDIO', 'STRENGTH', 'REST', 'STRENGTH', 'STRENGTH', 'REST'],
+                scheduleTypes: ['active', 'rest', 'active', 'rest', 'active', 'active', 'rest'],
+            },
+            'Normal weight': {
+                diet: [
+                    { icon: '🥗', text: 'Balanced plate: ½ vegetables, ¼ lean protein, ¼ complex carbs' },
+                    { icon: '🐟', text: 'Omega-3 2–3×/week: salmon, sardines, walnuts, flaxseed for inflammation' },
+                    { icon: '🍠', text: 'High-fibre carbs: sweet potato, legumes, berries, whole grains' },
+                    { icon: '💧', text: '2–2.5L water daily + green tea; limit sugar, alcohol, ultra-processed food' },
+                    { icon: '🥚', text: 'Lean protein every meal: eggs, turkey, tofu, cottage cheese — protect muscle' },
+                    { icon: '🍅', text: 'Colourful antioxidants daily; 30 different plant foods per week for gut health' },
+                ],
+                exercises: {
+                    strength: [
+                        { icon: '🏋️', text: 'Full-body strength 3×/week: push-pull-legs split, 3×8-12 moderate weight' },
+                        { icon: '💪', text: 'Compound priority: deadlifts, squats, pull-ups, overhead press, rows' },
+                        { icon: '🎯', text: 'Accessory lifts: cable flyes, lateral raises, curls, tricep dips 2×12-15' },
+                        { icon: '🧘', text: 'Core daily: plank variations, bicycle crunches, hanging leg raises' },
+                        { icon: '🔗', text: 'Supersets for efficiency — pair push/pull exercises, rest 60s between' },
+                        { icon: '📈', text: 'Deload week every 4–6 weeks: reduce weight 40%, maintain movement quality' },
+                    ],
+                    cardio: [
+                        { icon: '🏃', text: 'Zone-2 cardio 3×/week: 30–45 min brisk walk/jog at conversational pace' },
+                        { icon: '⚡', text: 'HIIT 1×/week: 20 min, 30s all-out sprint, 90s recovery, 8–10 rounds' },
+                        { icon: '🚴', text: 'Cycling or rowing 2×/week as low-impact cardiovascular alternative' },
+                        { icon: '🏊', text: 'Swimming — full-body, zero-impact, great for active recovery days' },
+                    ],
+                    flexibility: [
+                        { icon: '🤸', text: 'Post-workout 10 min static stretching: hamstrings, hip flexors, lats' },
+                        { icon: '🧘', text: 'Yoga or pilates 1–2×/week for mobility, posture, and mind-body connection' },
+                        { icon: '🦶', text: '10k+ steps daily; take stairs, walk for short errands' },
+                        { icon: '🎯', text: 'Active hobbies: hiking, climbing, dance, martial arts — keep fitness fun' },
+                    ]
+                },
+                schedule: ['STRENGTH', 'CARDIO', 'STRENGTH', 'HIIT', 'STRENGTH', 'CARDIO', 'REST'],
+                scheduleTypes: ['active', 'active', 'active', 'active', 'active', 'active', 'rest'],
+            },
+            Overweight: {
+                diet: [
+                    { icon: '🥦', text: 'Volume greens: broccoli, spinach, cucumber — high satiety, low calories' },
+                    { icon: '🍗', text: 'Lean protein 25-30g/meal: chicken breast, white fish, cottage cheese, tofu' },
+                    { icon: '🍚', text: 'Carb control: measure portions (¾ cup), choose oats/brown rice over white' },
+                    { icon: '🥤', text: 'Zero liquid calories: water, black coffee, plain green tea — ditch juice & soda' },
+                    { icon: '⏰', text: 'Eat within 8–10h window; stop eating 3h before bed to curb fat storage' },
+                    { icon: '📋', text: '500 kcal daily deficit via food, not exercise; track in app (Cronometer)' },
+                ],
+                exercises: {
+                    strength: [
+                        { icon: '🏋️', text: 'Strength 3×/week: moderate weight 12-15 reps, compound movements first' },
+                        { icon: '🍑', text: 'Large muscle groups burn more: goblet squats, Romanian deadlifts, chest press' },
+                        { icon: '💪', text: 'Circuit training: 5 exercises back-to-back, rest 90s — boosts metabolic burn' },
+                        { icon: '🔗', text: 'Resistance bands for travel or home — maintain training consistency' },
+                        { icon: '🧘', text: 'Core bracing every session: dead bugs, bird dogs, modified planks' },
+                    ],
+                    cardio: [
+                        { icon: '🔥', text: 'Cardio 4–5×/week: 40 min elliptical, cycling, incline walk — stay in fat-burn zone' },
+                        { icon: '🚶', text: 'Daily walking goal: 8,000–10,000 steps — significant daily calorie burn' },
+                        { icon: '🧊', text: 'Low-impact HIIT 1×/week: battle ropes, cycling sprints, swimming intervals' },
+                        { icon: '📉', text: 'Non-Exercise Activity Thermogenesis (NEAT): pace while on calls, take stairs always' },
+                    ],
+                    flexibility: [
+                        { icon: '🧘', text: 'Stretch daily 10–15 min: hip flexors, lower back, calves — prevent injury' },
+                        { icon: '🛁', text: 'Foam roll quads, IT band, glutes 5 min before each session' },
+                        { icon: '💤', text: '7–9h sleep strictly — poor sleep elevates ghrelin (hunger hormone)' },
+                    ]
+                },
+                schedule: ['CARDIO', 'STRENGTH', 'CARDIO', 'STRENGTH', 'CARDIO', 'HIIT', 'REST'],
+                scheduleTypes: ['active', 'active', 'active', 'active', 'active', 'active', 'rest'],
+            },
+            Obese: {
+                diet: [
+                    { icon: '🥗', text: 'Structured low-cal: 1200–1500 kcal (F) or 1500–1800 kcal (M) — consult dietitian' },
+                    { icon: '🥒', text: 'High-water veg: zucchini, cauliflower, celery, bell peppers — fill the plate' },
+                    { icon: '🍗', text: 'Ultra-lean protein: skinless chicken, white fish, egg whites, low-fat Greek yoghurt' },
+                    { icon: '🍚', text: 'Limit carbs to ½ cup/meal; eliminate added sugar, processed snacks entirely' },
+                    { icon: '🚫', text: 'Zero ultra-processed food, trans fat, sugary drinks, alcohol — strictly' },
+                    { icon: '💧', text: '2.5L+ water daily + food diary; track every meal for accountability' },
+                ],
+                exercises: {
+                    strength: [
+                        { icon: '🪑', text: 'Seated resistance: chair squats, wall push-ups, resistance band rows (daily)' },
+                        { icon: '💪', text: 'Bodyweight progression: standing push-ups → incline → floor over 4 weeks' },
+                        { icon: '🏋️', text: 'Machine-based gym: leg press, chest press, seated row — joint-friendly loads' },
+                        { icon: '🔗', text: 'Water resistance training: pool exercises reduce joint impact by 75%' },
+                    ],
+                    cardio: [
+                        { icon: '🚶', text: 'Daily walking: start 10–15 min, add 5 min every week, target 45 min' },
+                        { icon: '🏊', text: 'Water aerobics or pool walking 3×/week — ideal for joints and endurance' },
+                        { icon: '🚴', text: 'Recumbent cycling: low-impact, burn calories without knee stress' },
+                        { icon: '⏱️', text: 'Rest when needed — listen to your body, never push through joint pain' },
+                    ],
+                    flexibility: [
+                        { icon: '🧘', text: 'Chair yoga daily: seated stretches, gentle twists, neck rolls — mobility first' },
+                        { icon: '🦶', text: 'Foot and ankle circles, calf raises while seated — improve circulation' },
+                        { icon: '🩺', text: 'Consult doctor before starting — medical clearance + supervised progression' },
+                    ]
+                },
+                schedule: ['WALK', 'REST', 'POOL', 'STRENGTH', 'WALK', 'POOL', 'REST'],
+                scheduleTypes: ['active', 'rest', 'active', 'active', 'active', 'active', 'rest'],
+            }
+        };
+
+        // ===== CALCULATE =====
+        document.getElementById('calcBtn').addEventListener('click', calculate);
+        document.querySelectorAll('input').forEach(i => i.addEventListener('keypress', e => { if (e.key === 'Enter') calculate(); }));
+
+        function calculate() {
+            const h = parseFloat(document.getElementById('height').value);
+            const w = parseFloat(document.getElementById('weight').value);
+            const a = parseFloat(document.getElementById('age').value) || 30;
+
+            if (!h || !w || h < 100 || h > 250 || w < 20 || w > 300) {
+                alert('Please enter valid height (100–250 cm) and weight (20–300 kg)');
+                return;
+            }
+
+            userHeight = h; userWeight = w; userAge = a;
+            const hm = h / 100;
+            userBMI = Math.round((w / (hm * hm)) * 10) / 10;
+
+            if (userBMI < 18.5) userCategory = 'Underweight';
+            else if (userBMI < 25) userCategory = 'Normal weight';
+            else if (userBMI < 30) userCategory = 'Overweight';
+            else userCategory = 'Obese';
+
+            // BMR (Mifflin-St Jeor, assuming male for simplicity; could add gender field)
+            const bmr = Math.round(10 * w + 6.25 * h - 5 * a + 5);
+            const tdee = Math.round(bmr * 1.55);
+            const idealMin = Math.round(18.5 * hm * hm);
+            const idealMax = Math.round(24.9 * hm * hm);
+
+            // Update display
+            const bmiEl = document.getElementById('bmiVal');
+            bmiEl.textContent = userBMI;
+            bmiEl.style.color = userBMI < 18.5 ? '#3dffd0' : userBMI < 25 ? '#e8ff47' : userBMI < 30 ? '#ffd166' : '#ff5c35';
+
+            document.getElementById('catPill').textContent = userCategory.toUpperCase();
+            document.getElementById('catPill').style.background =
+                userCategory === 'Normal weight' ? 'rgba(232,255,71,0.12)' :
+                    userCategory === 'Underweight' ? 'rgba(61,255,208,0.12)' :
+                        userCategory === 'Overweight' ? 'rgba(255,209,102,0.12)' : 'rgba(255,92,53,0.12)';
+            document.getElementById('catPill').style.color =
+                userCategory === 'Normal weight' ? '#e8ff47' :
+                    userCategory === 'Underweight' ? '#3dffd0' :
+                        userCategory === 'Overweight' ? '#ffd166' : '#ff5c35';
+            document.getElementById('catPill').style.borderColor =
+                userCategory === 'Normal weight' ? 'rgba(232,255,71,0.3)' :
+                    userCategory === 'Underweight' ? 'rgba(61,255,208,0.3)' :
+                        userCategory === 'Overweight' ? 'rgba(255,209,102,0.3)' : 'rgba(255,92,53,0.3)';
+
+            // Bar (BMI range mapped to 0-100%)
+            const pct = Math.min(100, Math.max(0, ((userBMI - 14) / 22) * 100));
+            document.getElementById('bmiBar').style.width = pct + '%';
+
+            // Stats
+            document.getElementById('idealWeight').textContent = idealMin + '–' + idealMax + 'kg';
+            document.getElementById('bmrVal').textContent = bmr;
+            document.getElementById('tdeeVal').textContent = tdee;
+            document.getElementById('statRow').style.display = 'flex';
+
+            // Context bar
+            document.getElementById('ctxBmi').textContent = userBMI;
+            document.getElementById('ctxCat').textContent = userCategory;
+
+            // Plans
+            renderDiet(); renderExercise('strength'); renderSchedule();
+
+            // Trainer welcome
+            const welcomeMsg = `BMI calculated! Here's your quick snapshot:\n\n📊 BMI: **${userBMI}** (${userCategory})\n🔥 BMR: **${bmr} kcal** · TDEE: **${tdee} kcal**\n⚖️ Ideal weight range: **${idealMin}–${idealMax} kg**\n\nAsk me anything about your plan! 💪`;
+            addTrainerMessage(welcomeMsg.replace(/\*\*/g, ''));
+        }
+
+        function renderDiet() {
+            const items = DATA[userCategory].diet;
+            document.getElementById('dietList').innerHTML = items.map((d, i) =>
+                `<li style="animation-delay:${i * 0.06}s"><span class="icon">${d.icon}</span>${d.text}</li>`
+            ).join('');
+        }
+
+        function renderExercise(tab) {
+            currentExTab = tab;
+            const tabs = Object.keys(DATA[userCategory].exercises);
+            const labels = { strength: 'Strength', cardio: 'Cardio', flexibility: 'Flex / Recovery' };
+
+            document.getElementById('exTabs').innerHTML = tabs.map(t =>
+                `<button class="ex-tab ${t === tab ? 'active' : ''}" onclick="renderExercise('${t}')">${labels[t] || t}</button>`
+            ).join('');
+
+            const items = DATA[userCategory].exercises[tab];
+            document.getElementById('exList').innerHTML = items.map((e, i) =>
+                `<li style="animation-delay:${i * 0.06}s"><span class="icon">${e.icon}</span>${e.text}</li>`
+            ).join('');
+        }
+
+        function renderSchedule() {
+            const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+            const sched = DATA[userCategory].schedule;
+            const types = DATA[userCategory].scheduleTypes;
+            document.getElementById('scheduleGrid').innerHTML = days.map((d, i) =>
+                `<div class="day-block ${types[i] === 'active' ? 'active-day' : 'rest-day'}">
+      <div class="day-name">${d}</div>
+      <div class="day-type">${sched[i]}</div>
+    </div>`
+            ).join('');
+        }
+
+        // ===== CHAT =====
+        function getTime() {
+            return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function addUserMessage(text) {
+            const area = document.getElementById('messagesArea');
+            area.innerHTML += `<div class="msg user">
+    <div class="msg-bubble">${escHtml(text)}</div>
+    <div class="msg-time">${getTime()}</div>
+  </div>`;
+            scrollChat();
+        }
+
+        function addTrainerMessage(text) {
+            const area = document.getElementById('messagesArea');
+            const formatted = text
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/•/g, '·');
+            area.innerHTML += `<div class="msg trainer">
+    <div class="msg-bubble">${formatted}</div>
+    <div class="msg-time">${getTime()}</div>
+  </div>`;
+            scrollChat();
+        }
+
+        function showTyping() {
+            const area = document.getElementById('messagesArea');
+            area.innerHTML += `<div class="msg trainer typing-indicator" id="typingMsg">
+    <div class="msg-bubble">
+      <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+    </div>
+  </div>`;
+            scrollChat();
+        }
+
+        function removeTyping() {
+            const t = document.getElementById('typingMsg');
+            if (t) t.remove();
+        }
+
+        function scrollChat() {
+            const a = document.getElementById('messagesArea');
+            a.scrollTop = a.scrollHeight;
+        }
+
+        function escHtml(t) {
+            return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function sendQuick(btn) {
+            document.getElementById('chatInput').value = btn.textContent;
+            sendMessage();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            input.style.height = 'auto';
+            addUserMessage(text);
+
+            const btn = document.getElementById('sendBtn');
+            btn.disabled = true;
+
+            // Build system context
+            const bmiContext = userBMI
+                ? `User stats: BMI=${userBMI}, Category=${userCategory}, Height=${userHeight}cm, Weight=${userWeight}kg, Age=${userAge}. Personalise every answer to these stats.`
+                : 'User has not yet calculated their BMI. Encourage them to do so for personalised advice.';
+
+            const systemPrompt = `You are Coach Apex, an elite AI personal trainer and sports nutritionist. You are direct, motivating, and evidence-based.
+${bmiContext}
+Keep responses concise (max 200 words), use bullet points (•) and bold (**text**) for readability.
+Cover: workouts, nutrition, supplements, recovery, mindset, fat loss, muscle gain, mobility.
+Always recommend consulting a doctor for medical conditions. Use metric units.`;
+
+            chatHistory.push({ role: 'user', content: text });
+
+            const provider = document.getElementById('providerSelect').value;
+
+            if (provider === 'gemini' && !APEX_API_KEY) {
+                removeTyping();
+                chatHistory.pop();
+                addTrainerMessage('❗ Please enter a valid Gemini API key above and click Save before sending messages.');
+                btn.disabled = false;
+                input.focus();
+                return;
+            }
+
+            showTyping();
+
+            try {
+                if (provider === 'openai') {
+                    const rawHistory = chatHistory.slice(-12);
+                    const messages = [
+                        { role: 'system', content: systemPrompt },
+                        ...rawHistory.map(m => ({ role: m.role, content: m.content }))
+                    ];
+
+                    const res = await fetch('/proxy/openai', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: 'gpt-4o-mini',
+                            messages,
+                            max_tokens: 600,
+                            temperature: 0.8
+                        })
+                    });
+
+                    if (!res.ok) {
+                        const err = await res.json().catch(() => ({}));
+                        const msg = err?.error?.message || `API error ${res.status}`;
+                        throw new Error(msg);
+                    }
+
+                    const data = await res.json();
+                    const reply = data?.choices?.[0]?.message?.content || 'Sorry, no response. Try again!';
+
+                    chatHistory.push({ role: 'assistant', content: reply });
+                    removeTyping();
+                    addTrainerMessage(reply);
+                    btn.disabled = false;
+                    input.focus();
+                    return;
+                }
+
+                // Build Gemini conversation - inject system prompt into first user turn
+                const rawHistory = chatHistory.slice(-12);
+                const geminiContents = rawHistory.map((m, i) => ({
+                    role: m.role === 'assistant' ? 'model' : 'user',
+                    parts: [{ text: i === 0 && m.role === 'user'
+                        ? systemPrompt + '\n\nUser: ' + m.content
+                        : m.content }]
+                }));
+
+                const res = await fetch(
+                    `/proxy/gemini`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: geminiContents,
+                            generationConfig: { maxOutputTokens: 600, temperature: 0.8 }
+                        })
+                    }
+                );
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    const msg = err?.error?.message || `API error ${res.status}`;
+                    throw new Error(msg);
+                }
+
+                const data = await res.json();
+                const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, no response. Try again!';
+
+                chatHistory.push({ role: 'assistant', content: reply });
+                removeTyping();
+                addTrainerMessage(reply);
+            } catch (err) {
+                removeTyping();
+                chatHistory.pop();
+                let errMsg;
+                if (err.message === 'Failed to fetch') {
+                    errMsg = '❌ Failed to fetch — open this file via a local server.\n\nQuickest fix: install VS Code + Live Server extension, then right-click the file → Open with Live Server.';
+                } else if (err.message.includes('API_KEY_INVALID') || err.message.includes('400')) {
+                    errMsg = '❌ API key error. The key may have expired — generate a new one at aistudio.google.com/apikey';
+                } else if (err.message.includes('429')) {
+                    errMsg = '⚠️ Too many requests — wait a moment and try again.';
+                } else {
+                    errMsg = `❌ Error: ${err.message}`;
+                }
+                addTrainerMessage(errMsg);
+            }
+
+            btn.disabled = false;
+            input.focus();
+        }
+
+        // Auto-resize textarea
+        document.getElementById('chatInput').addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+        });
+        document.getElementById('chatInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Initialize API key input when page loads
+        const apiInput = document.getElementById('apiKeyInput');
+        const savedKey = localStorage.getItem('APEX_API_KEY');
+        if (savedKey) {
+            apiInput.value = savedKey;
+        }
+        document.getElementById('saveApiKeyBtn').addEventListener('click', function () {
+            setApiKey(apiInput.value);
+        });
+
+    </script>
+</body>
+
+</html>
